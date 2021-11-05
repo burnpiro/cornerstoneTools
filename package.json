@@ -36,7 +36,6 @@
     "docs:deploy": "bash ./.circleci/update-docs.sh",
     "lint": "eslint -c .eslintrc.js --fix src && prettier --single-quote --write src/**/*.{js,json,css}",
     "prepublishOnly": "npm run build",
-    "prepare": "npm run build",
     "start": "npm run build:prod && npm run build:dev",
     "test": "npm run test:unit",
     "test:unit": "jest --clearCache && jest --runInBand \\.test\\.js$",
