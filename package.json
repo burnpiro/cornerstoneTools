@@ -20,7 +20,7 @@
     "node": ">=8.16.0"
   },
   "scripts": {
-    "build": "npm run test && npm run clean:dist && npm run version && npm run build:prod && npm run build:dev",
+    "build": "npm run clean:dist && npm run version && npm run build:prod && npm run build:dev",
     "build:dev": "webpack --progress --config ./config/webpack/webpack-dev",
     "build:prod": "webpack --config ./config/webpack/webpack-prod",
     "commit": "git-cz",
@@ -36,6 +36,7 @@
     "docs:deploy": "bash ./.circleci/update-docs.sh",
     "lint": "eslint -c .eslintrc.js --fix src && prettier --single-quote --write src/**/*.{js,json,css}",
     "prepublishOnly": "npm run build",
+    "prepare": "npm run build",
     "start": "npm run build:prod && npm run build:dev",
     "test": "npm run test:unit",
     "test:unit": "jest --clearCache && jest --runInBand \\.test\\.js$",
@@ -80,6 +81,7 @@
     "husky": "3.0.x",
     "jest": "^25.1.0",
     "jest-junit": "5.1.0",
+    "jsdom-worker": "^0.2.1",
     "lint-staged": "^9.2.5",
     "lodash": "^4.17.15",
     "nodemon": "^2.0.2",
@@ -89,11 +91,13 @@
     "terser-webpack-plugin": "^1.4.1",
     "webpack": "^4.35.2",
     "webpack-cli": "^3.3.5",
-    "webpack-dev-server": "^3.7.2"
+    "webpack-dev-server": "^3.7.2",
+    "worker-loader": "^3.0.8"
   },
   "dependencies": {
     "@babel/runtime": "7.1.2",
-    "cornerstone-math": "0.1.9"
+    "cornerstone-math": "0.1.9",
+    "threads": "^1.7.0"
   },
   "files": [
     "dist/cornerstoneTools.js",
@@ -120,7 +124,10 @@
       "src/**/*.js",
       "!src/index.js"
     ],
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "setupFiles": [
+      "jsdom-worker"
+    ]
   },
   "config": {
     "commitizen": {

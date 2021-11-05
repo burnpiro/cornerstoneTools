@@ -284,38 +284,39 @@ export default class FreehandRoiTool extends BaseAnnotationTool {
       );
 
       // Calculate the mean & standard deviation from the pixels and the object shape
-      meanStdDev = calculateFreehandStatistics.call(
+      calculateFreehandStatistics.call(
         this,
         pixels,
         polyBoundingBox,
-        data.handles.points
+        data.handles.points,
+        meanStdDev => {
+          if (modality === 'PT') {
+            // If the image is from a PET scan, use the DICOM tags to
+            // Calculate the SUV from the mean and standard deviation.
+
+            // Note that because we are using modality pixel values from getPixels, and
+            // The calculateSUV routine also rescales to modality pixel values, we are first
+            // Returning the values to storedPixel values before calcuating SUV with them.
+            // TODO: Clean this up? Should we add an option to not scale in calculateSUV?
+            meanStdDevSUV = {
+              mean: calculateSUV(
+                image,
+                (meanStdDev.mean - image.intercept) / image.slope
+              ),
+              stdDev: calculateSUV(
+                image,
+                (meanStdDev.stdDev - image.intercept) / image.slope
+              ),
+            };
+          }
+
+          // If the mean and standard deviation values are sane, store them for later retrieval
+          if (meanStdDev && !isNaN(meanStdDev.mean)) {
+            data.meanStdDev = meanStdDev;
+            data.meanStdDevSUV = meanStdDevSUV;
+          }
+        }
       );
-
-      if (modality === 'PT') {
-        // If the image is from a PET scan, use the DICOM tags to
-        // Calculate the SUV from the mean and standard deviation.
-
-        // Note that because we are using modality pixel values from getPixels, and
-        // The calculateSUV routine also rescales to modality pixel values, we are first
-        // Returning the values to storedPixel values before calcuating SUV with them.
-        // TODO: Clean this up? Should we add an option to not scale in calculateSUV?
-        meanStdDevSUV = {
-          mean: calculateSUV(
-            image,
-            (meanStdDev.mean - image.intercept) / image.slope
-          ),
-          stdDev: calculateSUV(
-            image,
-            (meanStdDev.stdDev - image.intercept) / image.slope
-          ),
-        };
-      }
-
-      // If the mean and standard deviation values are sane, store them for later retrieval
-      if (meanStdDev && !isNaN(meanStdDev.mean)) {
-        data.meanStdDev = meanStdDev;
-        data.meanStdDevSUV = meanStdDevSUV;
-      }
     }
 
     // Retrieve the pixel spacing values, and if they are not

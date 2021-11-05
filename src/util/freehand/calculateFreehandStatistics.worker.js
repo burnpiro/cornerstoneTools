@@ -1,55 +1,5 @@
-import { spawn, Thread } from 'threads';
-import pointInFreehand from './pointInFreehand.js';
-import Worker from './calculateFreehandStatistics.worker';
-
-/**
- * Calculates the statistics of all the pixels within the freehand object.
- * @export @public @method
- * @name calculateFreehandStatistics
- *
- * @param {Object} sp An array of the pixel data.
- * @param {Object} boundingBox Rectangular box enclosing the polygon.
- * @param {Object} dataHandles Data object associated with the tool.
- * @param {function} cb callback for statistics
- // * @returns {void} Object containing the derived statistics.
- */
-// export default function(sp, boundingBox, dataHandles) {
-//   const statisticsObj = {
-//     count: 0,
-//     mean: 0.0,
-//     variance: 0.0,
-//     stdDev: 0.0,
-//   };
-//
-//   const sum = getSum(sp, boundingBox, dataHandles);
-//
-//   if (sum.count === 0) {
-//     return statisticsObj;
-//   }
-//
-//   statisticsObj.count = sum.count;
-//   statisticsObj.mean = sum.value / sum.count;
-//   statisticsObj.variance =
-//     sum.squared / sum.count - statisticsObj.mean * statisticsObj.mean;
-//   statisticsObj.stdDev = Math.sqrt(statisticsObj.variance);
-//
-//   return statisticsObj;
-// }
-
-export default function(sp, boundingBox, dataHandles, cb) {
-  setTimeout(async () => {
-    const statistics = await spawn(new Worker());
-    const stats = await statistics.calculateFreehandStatistics(
-      sp,
-      boundingBox,
-      dataHandles
-    );
-
-    cb(stats);
-
-    await Thread.terminate(statistics);
-  }, 0);
-}
+import { expose } from 'threads/worker';
+import pointInFreehand from './pointInFreehand';
 
 /**
  * Calculates the sum, squared sum and count of all pixels within the polygon.
@@ -107,3 +57,28 @@ function sumPointIfInFreehand(dataHandles, point, workingSum, pixelValue) {
     workingSum.count++;
   }
 }
+
+expose({
+  calculateFreehandStatistics(sp, boundingBox, dataHandles) {
+    const statisticsObj = {
+      count: 0,
+      mean: 0.0,
+      variance: 0.0,
+      stdDev: 0.0,
+    };
+
+    const sum = getSum(sp, boundingBox, dataHandles);
+
+    if (sum.count === 0) {
+      return statisticsObj;
+    }
+
+    statisticsObj.count = sum.count;
+    statisticsObj.mean = sum.value / sum.count;
+    statisticsObj.variance =
+      sum.squared / sum.count - statisticsObj.mean * statisticsObj.mean;
+    statisticsObj.stdDev = Math.sqrt(statisticsObj.variance);
+
+    return statisticsObj;
+  },
+});
