@@ -1,5 +1,6 @@
 import FreehandRoiTool from './FreehandRoiTool.js';
 import freehandUtils from '../../util/freehand/index.js';
+import { calculateFreehandStatistics as mockStats } from '../../util/freehand/calculateFreehandStatisticsHelpers';
 import { getLogger } from '../../util/logger.js';
 
 const {
@@ -36,6 +37,25 @@ jest.mock('./../../externalModules.js', () => ({
     getPixels: () => [100, 100, 100, 100, 4, 5, 100, 3, 6],
   },
 }));
+
+jest.mock('threads', () => ({
+  spawn: () => new Promise(resolve => resolve(mockStats)),
+}));
+jest.mock(
+  './../../util/freehand/calculateFreehandStatistics.worker.js',
+  () => ({
+    expose: () => ({
+      calculateFreehandStatistics: mockStats,
+    }),
+    calculateFreehandStatistics: () => mockStats,
+  })
+);
+jest.mock(
+  './../../util/freehand/calculateFreehandStatistics.js',
+  () => (sp, boundingBox, dataHandles, cb) => {
+    return mockStats(sp, boundingBox, dataHandles);
+  }
+);
 
 const badMouseEventData = 'hello world';
 const goodMouseEventData = {
@@ -380,11 +400,7 @@ describe('calculateFreehandStatistics.js', function() {
     // Set a pixel outside the polygon to a high value;
     pixels[78] = 1000.0;
 
-    const statisticsObj = calculateFreehandStatistics(
-      pixels,
-      boundingBox,
-      dataHandles
-    );
+    const statisticsObj = mockStats(pixels, boundingBox, dataHandles);
 
     expect(statisticsObj.mean).toBeCloseTo(0.0, 5);
     expect(statisticsObj.variance).toBeCloseTo(0.0, 5);
@@ -406,11 +422,7 @@ describe('calculateFreehandStatistics.js', function() {
       pixels[i] = 4.0;
     }
 
-    const statisticsObj = calculateFreehandStatistics(
-      pixels,
-      boundingBox,
-      dataHandles
-    );
+    const statisticsObj = mockStats(pixels, boundingBox, dataHandles);
 
     expect(statisticsObj.mean).toBeCloseTo(2.0, 5);
     expect(statisticsObj.variance).toBeCloseTo(2.0, 5);

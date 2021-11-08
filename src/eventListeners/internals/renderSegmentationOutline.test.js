@@ -2,6 +2,7 @@ import { getModule } from '../../store/index.js';
 import { getOutline, renderOutline } from './renderSegmentationOutline.js';
 import external from '../../externalModules.js';
 import * as drawing from '../../drawing/index.js';
+import { calculateFreehandStatistics as mockStats } from '../../util/freehand/calculateFreehandStatisticsHelpers';
 
 const { state } = getModule('segmentation');
 
@@ -109,6 +110,22 @@ jest.mock('../../externalModules', () => ({
     },
   },
 }));
+
+jest.mock('threads', () => ({
+  spawn: () => new Promise(resolve => resolve(mockStats)),
+}));
+jest.mock('../../util/freehand/calculateFreehandStatistics.worker.js', () => ({
+  expose: () => ({
+    calculateFreehandStatistics: mockStats,
+  }),
+  calculateFreehandStatistics: () => mockStats,
+}));
+jest.mock(
+  '../../util/freehand/calculateFreehandStatistics.js',
+  () => (sp, boundingBox, dataHandles, cb) => {
+    return mockStats(sp, boundingBox, dataHandles);
+  }
+);
 
 let eventData;
 let evt;
